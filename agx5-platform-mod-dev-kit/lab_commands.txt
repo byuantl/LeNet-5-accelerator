@@ -1,0 +1,113 @@
+Note
+----
+
+Use this file to copy commands into the PowerShell or Ubuntu WSL shell, as directed. Some commands span multiple 
+lines. They have line extensions \ at the end. Copy these commands acroos multiple line from the beginning to the 
+end and then paste them into the shell.
+
+8.1.2	Type ‘wsl -d Ubuntu-20.04’ in the PowerShell
+
+8.2.1	export PATH="/mnt/c/altera_pro/25.1.1/syscon/bin:$PATH"
+
+8.2.2	source ~/build-openvino-dev/openvino_env/bin/activate
+		source /opt/intel/openvino_2024.6.0/setupvars.sh
+		source /opt/altera/fpga_ai_suite_2025.1.1/dla/setupvars.sh
+		
+8.2.3	dla_compiler --march $COREDLA_ROOT/example_architectures/AGX5_Performance.arch --fanalyze-area
+
+8.3.1	mkdir ~/coredla_work && cd ~/coredla_work
+
+8.3.2	cp -a /mnt/c/altera_workshops/axc3000/FPGA_AI_Suite_lab/* ~/coredla_work
+
+8.3.3	source dla_init_local_directory.sh
+
+8.4.1	python convert-pt-2-onnx.py
+
+8.4.2	ovc Digit-classifier.onnx --compress_to_fp16 False
+
+8.4.3	cp Digit-classifier.onnx /mnt/c/altera_workshops/axc3000/FPGA_AI_Suite_lab 
+
+10.4.2
+dla_compiler \
+--march $COREDLA_ROOT/example_architectures/AGX5_Performance.arch \
+--network-file ./Digit-classifier.xml \
+--foutput-format=open_vino_hetero \
+--o digit-classifier-bin.bin \
+--dumpdir work \
+--fanalyze-performance --fanalyze-area
+
+10.5.2
+dla_compiler \
+--march ./AGX5_Streaming_Ddrfree_Softmax.arch \
+--network-file ./Digit-classifier.xml \
+--foutput-format=open_vino_hetero \
+--o digit-classifier-bin.bin \
+--fplugin=HETERO:FPGA --fanalyze-performance --fanalyze-area \
+--ffolding-option 0 \
+--dumpdir work
+
+11.1.1	cd $COREDLA_WORK/data
+
+11.1.2	python display-fp16-file.py array_hwc_fp16_5.bin
+
+11.2.1	cd $COREDLA_WORK/runtime
+
+11.2.2	./build_runtime.sh -target_emulation
+
+11.2.3	cd $COREDLA_WORK/work
+
+11.3.2
+$COREDLA_WORK/runtime/build_Release/dla_benchmark/dla_benchmark \
+-b 1 \
+-niter 1 \
+-nireq 1 \
+-m ../Digit-classifier.xml \
+-d HETERO:FPGA \
+-streaming_input_pipe pipe \
+-arch_file ../AGX5_Streaming_Ddrfree_Softmax.arch \
+-dump_output \
+-folding_option 0 \
+-plugins emulation -dump_output
+
+11.3.6	Type the following command in the second Ubuntu shell
+wsl -d Ubuntu-20.04
+
+11.3.8	Type the following commands in the second Ubuntu shell
+cd ~/coredla_work/work
+cat ../data/array_hwc_fp16_0.bin > pipe
+
+11.3.10	Type the following command in the second Ubuntu shell
+cat result.txt
+
+Close the second Ubuntu shell
+
+12.1.1	cd $COREDLA_WORK
+
+dlac \
+--network-file ./Digit-classifier.xml \
+--march ./AGX5_Streaming_Ddrfree_Softmax.arch \
+--foutput-format=open_vino_hetero \
+--o digit_classifier-bin.bin \
+--fplugin HETERO:FPGA \
+--dumpdir ./dlac-out/ \
+--ffolding-option 0 \
+--fanalyze-performance --fanalyze-area
+
+12.2.1
+dla_create_ip \
+--flow create_ip \
+--arch ./AGX5_Streaming_Ddrfree_Softmax.arch \
+--ip_dir ./build-agx5-lenet/coredla_ip \
+--parameter_rom_dir ./dlac-out/parameter_rom/ --licensed
+
+13.1.1	cp -R build-agx5-lenet/coredla_ip /mnt/c/altera_workshops/axc3000/FPGA_AI_Suite_lab/build-agx5-lenet/hw/
+
+
+
+
+
+
+		
+
+
+
